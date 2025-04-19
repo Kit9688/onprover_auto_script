@@ -1,6 +1,10 @@
-# onprover_auto_script
+# 🛠️ OnProver自动重启脚本
 
-**首先在谷歌商店下载油猴**
+**1️⃣ 首先在谷歌商店下载油猴**
 https://chromewebstore.google.com/detail/%E7%AF%A1%E6%94%B9%E7%8C%B4/dhdgffkkebhmkfjojejmpbldmpobfkfo
 
-**将onprover_script代码导入油猴脚本里面然后保存，刷新onprover页面即可，可以按F12查看控制台日志**
+**2️⃣ 点击油猴插件，添加新脚本，将onprover_script所有代码导入油猴脚本里面，Ctrl + S 保存**
+
+**3️⃣ 打开 ONProver 页面：https://onprover.orochi.network**
+
+**4️⃣ 按F12，打开控制台，查看脚本是否成功**
