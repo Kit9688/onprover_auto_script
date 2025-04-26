@@ -1,0 +1,175 @@
+// ==UserScript==
+// @name         Auto Prover Script with Enhanced CAPTCHA Handling
+// @namespace    http://tampermonkey.net/
+// @version      2.0
+// @description  每15分钟刷新页面，点击PROVER按钮，并自动点击“确认您是真人”左侧的CAPTCHA复选框
+// @author       Kit
+// @match        https://onprover.orochi.network/*
+// @grant        none
+// ==/UserScript==
+
+(function autoMine() {
+    'use strict';
+
+    console.log("[脚本启动] F12 控制台版脚本运行中...");
+
+    let lastStats = { earned: null, proofs: null, new: null };
+    let stuckCounter = 0;
+
+    function getStats() {
+      try {
+        // 直接定位包含数值的元素
+        console.log("[状态] 开始获取状态数据");
+
+        // 根据您提供的HTML结构，直接定位这三个元素
+        const earnedElement = document.querySelector('.text-primary-300.font-bold');
+        const proofsElement = document.querySelector('.text-zk-green-500.font-bold');
+        const newProofsElement = document.querySelector('.text-zk-blue-300.font-bold');
+
+        // 提取值
+        const earned = earnedElement ? earnedElement.textContent.trim() : null;
+        const proofs = proofsElement ? proofsElement.textContent.trim() : null;
+        const newProofs = newProofsElement ? newProofsElement.textContent.trim() : null;
+
+        // 记录状态
+        if (earned) console.log(`[状态] $ON EARNED: ${earned}`);
+        if (proofs) console.log(`[状态] VERIFIED PROOFS: ${proofs}`);
+        if (newProofs) console.log(`[状态] NEW PROOFS: ${newProofs}`);
+
+        // 返回结果
+        const result = { earned, proofs, new: newProofs };
+        return result;
+      } catch (error) {
+        console.error("[错误] 获取状态时出错:", error);
+        return { earned: null, proofs: null, new: null };
+      }
+    }
+
+    function autoClickProver(retry = 20) {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        const buttons = document.querySelectorAll("button");
+        for (let btn of buttons) {
+          const txt = btn.textContent.trim().toLowerCase();
+          if (txt.includes("prover") && !txt.includes("stop")) {
+            console.log("[自动点击] Prover 按钮触发");
+            btn.click();
+            clearInterval(interval);
+            return;
+          }
+        }
+        attempts++;
+        if (attempts >= retry) {
+          console.warn("[失败] 多次尝试未找到按钮");
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
+
+    // 添加自动点击验证复选框的功能
+    function autoClickCaptcha() {
+      console.log("[验证] 尝试自动点击验证复选框");
+
+      // 尝试点击复选框
+      const clickCaptchaCheckbox = () => {
+        try {
+          // 尝试不同的选择器来定位复选框
+          const selectors = [
+            'input[type="checkbox"]', // 基本的复选框
+            '.checkbox', // Cloudflare 常用的类
+            '.cf-checkbox', // Cloudflare 可能使用的类
+            'iframe[src*="cloudflare"]', // Cloudflare iframe
+            'iframe[title*="challenge"]', // 验证框架
+            '#checkbox', // 可能的ID
+          ];
+
+          // 尝试直接点击复选框
+          for (const selector of selectors) {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+              console.log(`[验证] 找到元素: ${selector}, 数量: ${elements.length}`);
+              for (const element of elements) {
+                try {
+                  element.click();
+                  console.log(`[验证] 已点击元素: ${selector}`);
+                } catch (e) {
+                  console.log(`[验证] 点击元素失败: ${e.message}`);
+                }
+              }
+            }
+          }
+
+          // 如果有iframe，尝试在iframe内点击
+          const iframes = document.querySelectorAll('iframe');
+          for (const iframe of iframes) {
+            try {
+              console.log(`[验证] 尝试在iframe中查找复选框: ${iframe.src || 'unknown'}`);
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+              const checkboxes = iframeDoc.querySelectorAll('input[type="checkbox"], .checkbox');
+              for (const checkbox of checkboxes) {
+                checkbox.click();
+                console.log("[验证] 已点击iframe中的复选框");
+              }
+            } catch (e) {
+              console.log(`[验证] 访问iframe失败: ${e.message}`);
+            }
+          }
+        } catch (error) {
+          console.error(`[验证] 点击复选框时出错: ${error.message}`);
+        }
+      };
+
+      // 立即尝试点击一次
+      clickCaptchaCheckbox();
+
+      // 然后每秒尝试一次，最多尝试10次
+      let attempts = 0;
+      const captchaInterval = setInterval(() => {
+        if (attempts >= 10) {
+          clearInterval(captchaInterval);
+          console.log("[验证] 已尝试多次自动点击验证复选框，可能需要手动操作");
+          alert("⚠️ 请手动完成验证码 ✅，之后脚本会继续运行！");
+          return;
+        }
+        attempts++;
+        clickCaptchaCheckbox();
+        console.log(`[验证] 第 ${attempts} 次尝试点击验证复选框`);
+      }, 1000);
+    }
+
+    // 如果出现 Cloudflare 验证提醒
+    setTimeout(() => {
+      if (document.body.innerText.includes("确认您是真人") ||
+          document.body.innerText.includes("verify") ||
+          document.body.innerText.includes("challenge") ||
+          document.querySelectorAll('iframe[src*="cloudflare"]').length > 0) {
+        console.log("[验证] 检测到验证页面");
+        autoClickCaptcha();
+      } else {
+        autoClickProver();
+      }
+    }, 4000);
+
+    // 每分钟监测一次状态是否卡住
+    setInterval(() => {
+      const current = getStats();
+      console.log("[状态监控]", current);
+
+      if (
+        current.earned === lastStats.earned &&
+        current.proofs === lastStats.proofs &&
+        current.new === lastStats.new
+      ) {
+        stuckCounter++;
+        console.warn(`[卡顿警告] 第 ${stuckCounter} 分钟无变化`);
+      } else {
+        stuckCounter = 0;
+        lastStats = current;
+      }
+
+      if (stuckCounter >= 10) {
+        console.log("[页面刷新] 检测到10分钟无响应，正在刷新...");
+        location.reload();
+      }
+    }, 60 * 1000);
+  })();
