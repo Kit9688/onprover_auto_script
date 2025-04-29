@@ -36,16 +36,34 @@
   function autoClickProver(retry = 20) {
     let attempts = 0;
     const interval = setInterval(() => {
+      // 查找所有按钮
       const buttons = document.querySelectorAll("button");
+      
       for (let btn of buttons) {
-        const txt = btn.textContent.trim().toLowerCase();
-        if (txt.includes("prover") && !txt.includes("stop")) {
-          console.log("[自动点击] Prover 按钮触发");
+        // 检查按钮内容
+        const btnText = btn.textContent.trim().toLowerCase();
+        const btnHTML = btn.innerHTML;
+        
+        // 查找第一个按钮 (prove按钮) - 包含prove文本和svg图标
+        if (btnText.includes("prove") && !btnText.includes("stop") && 
+            btnHTML.includes("<svg") && btnHTML.includes("fill=\"#FFF\"")) {
+          console.log("[自动点击] Prove 按钮触发");
+          btn.click();
+          clearInterval(interval);
+          return;
+        }
+        
+        // 查找第二个按钮 (Stop proving按钮) - 包含stop proving文本
+        if (btnText.includes("stop proving") && 
+            btnHTML.includes("<svg") && btnHTML.includes("fill=\"#FFF\"")) {
+          console.log("[自动点击] Stop proving 按钮触发");
           btn.click();
           clearInterval(interval);
           return;
         }
       }
+      
+      // 如果都没找到，继续尝试
       attempts++;
       if (attempts >= retry) {
         console.warn("[失败] 多次尝试未找到按钮");
