@@ -45,8 +45,7 @@
         const btnHTML = btn.innerHTML;
         
         // 查找第一个按钮 (prove按钮) - 包含prove文本和svg图标
-        if (btnText.includes("prove") && !btnText.includes("stop") && 
-            btnHTML.includes("<svg") && btnHTML.includes("fill=\"#FFF\"")) {
+        if (btnText.includes("prove") && !btnText.includes("stop")) {
           console.log("[自动点击] Prove 按钮触发");
           btn.click();
           clearInterval(interval);
@@ -54,8 +53,7 @@
         }
         
         // 查找第二个按钮 (Stop proving按钮) - 包含stop proving文本
-        if (btnText.includes("stop proving") && 
-            btnHTML.includes("<svg") && btnHTML.includes("fill=\"#FFF\"")) {
+        if (btnText.includes("stop proving")) {
           console.log("[自动点击] Stop proving 按钮触发");
           btn.click();
           clearInterval(interval);
