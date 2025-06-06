@@ -44,7 +44,7 @@
         const btnText = btn.textContent.trim().toLowerCase();
         const btnHTML = btn.innerHTML;
         
-        // 查找第一个按钮 (prove按钮) - 包含prove文本和svg图标
+        // 查找第一个按钮 (prove按钮)
         if (btnText.includes("prove") && !btnText.includes("stop")) {
           console.log("[自动点击] Prove 按钮触发");
           btn.click();
